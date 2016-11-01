@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import {
   //Animated,
-  Image,
   View,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
 
 import Swiper from 'react-native-swiper';
 import CameraView from './components/CameraView';
+import CaptureView from './components/CaptureView';
 
 export default class App extends Component {
   constructor(props) {
@@ -23,11 +23,12 @@ export default class App extends Component {
 
       capturePreview: false,
 
-      cameraAnimation: new Animated.Value(1),
+      //cameraAnimation: new Animated.Value(1),
     };
 
     this._onMomentumScrollEnd = this._onMomentumScrollEnd.bind(this);
     this._handleCapture = this._handleCapture.bind(this);
+    this._cancelCapture = this._cancelCapture.bind(this);
   }
 
   _onMomentumScrollEnd(e, verticalState, verticalContext) {
@@ -82,16 +83,16 @@ export default class App extends Component {
 
         {
           this.state.capturePreview
-          && (
-            <View style={[styles.container, styles.preview]}>
-              <Text style={{color: 'white'}}>Preview</Text>
-              <Image source={{uri: this._photoPath}} />
-            </View>
-          )
+          &&
+          <CaptureView
+            uri={this._photoPath}
+            onCancel={this._cancelCapture}
+          />
         }
 
         <View style={[styles.overlay, styles.bottomOverlay]}>
           <TouchableOpacity
+            disabled={this.state.capturePreview}
             onPressOut={() => {
               if (this.refs.camera.state.isRecording) {
                 this.refs.camera.stopRecording();
@@ -133,19 +134,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
-  preview: {
-    position: 'absolute',
-    right: 0,
-    left: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: 'black',
-  },
   overlay: {
     position: 'absolute',
     padding: 16,
     right: 0,
     left: 0,
+    alignItems: 'center',
+  },
+  topOverlay: {
+    top: 0,
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   bottomOverlay: {
