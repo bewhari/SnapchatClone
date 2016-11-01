@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import {
   StyleSheet,
   Dimensions,
@@ -8,6 +8,10 @@ import {
 import Camera from 'react-native-camera';
 
 export default class CameraView extends Component {
+  static propTypes = {
+    onCapture: PropTypes.func.isRequired,
+  };
+
   constructor(props) {
     super(props);
 
@@ -34,13 +38,14 @@ export default class CameraView extends Component {
   takePicture() {
     if (this.camera) {
       this.camera.capture()
-        .then(data => console.log(data))
+        .then(data => {this.props.onCapture(data)})
         .catch(err => console.error(err));
     }
   }
 
   startRecording() {
     if (this.camera) {
+      console.log('started recording');
       this.camera.capture({mode: Camera.constants.CaptureMode.video})
         .then(data => console.log(data))
         .catch(err => console.error(err));
@@ -53,6 +58,7 @@ export default class CameraView extends Component {
     if (this.camera) {
       this.camera.stopCapture();
       this.setState({isRecording: false});
+      console.log('stopped recording');
     }
   }
 

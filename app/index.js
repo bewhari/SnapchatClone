@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
 import {
+  //Animated,
+  Image,
   View,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 import Swiper from 'react-native-swiper';
@@ -17,13 +20,28 @@ export default class App extends Component {
       horizontalIndex: 1,
       verticalIndex: 1,
       horizontalScrollEnabled: true,
+
+      capturePreview: false,
+
+      cameraAnimation: new Animated.Value(1),
     };
 
     this._onMomentumScrollEnd = this._onMomentumScrollEnd.bind(this);
+    this._handleCapture = this._handleCapture.bind(this);
   }
 
   _onMomentumScrollEnd(e, verticalState, verticalContext) {
     this.setState({ horizontalScrollEnabled: verticalState.index == 1 });
+  }
+
+  _handleCapture(data) {
+    console.log(data);
+    this._photoPath = data.path;
+    this.setState({capturePreview: true});
+  }
+
+  _cancelCapture() {
+    this.setState({capturePreview: false});
   }
 
   render() {
@@ -50,7 +68,7 @@ export default class App extends Component {
               <Text>Top</Text>
             </View>
 
-            <CameraView ref="camera" />
+            <CameraView ref="camera" onCapture={this._handleCapture} />
 
             <View style={styles.container}>
               <Text>Bottom</Text>
@@ -62,13 +80,47 @@ export default class App extends Component {
           </View>
         </Swiper>
 
+        {
+          this.state.capturePreview
+          && (
+            <View style={[styles.container, styles.preview]}>
+              <Text style={{color: 'white'}}>Preview</Text>
+              <Image source={{uri: this._photoPath}} />
+            </View>
+          )
+        }
+
         <View style={[styles.overlay, styles.bottomOverlay]}>
           <TouchableOpacity
-            style={styles.captureButton}
-            onPress={() => {this.refs.camera.takePicture()}}
+            onPressOut={() => {
+              if (this.refs.camera.state.isRecording) {
+                this.refs.camera.stopRecording();
+              } else {
+                this.refs.camera.takePicture();
+              }
+              /* Animated.timing(
+                this.state.cameraAnimation,
+                {
+                  toValue: 0.5,
+                  friction: 1,
+                }
+              ).start(); */
+            }}
+            delayLongPress={300}
+            onLongPress={() => {
+              this.refs.camera.startRecording();
+            }}
           >
+            {/*
+            <Animated.View style={{
+              ...StyleSheet.flatten(styles.captureButton),
+              transform: [{scale: this.state.cameraAnimation}],
+            }}/>
+            */}
+            <View style={styles.captureButton} />
           </TouchableOpacity>
         </View>
+
       </View>
     );
   }
@@ -80,6 +132,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
+  },
+  preview: {
+    position: 'absolute',
+    right: 0,
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'black',
   },
   overlay: {
     position: 'absolute',
