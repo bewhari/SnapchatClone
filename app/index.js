@@ -12,7 +12,9 @@ import Swiper from 'react-native-swiper';
 import CameraView from './components/CameraView';
 import CaptureView from './components/CaptureView';
 
-const VIDEO_LIMIT = 3000;
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+
+const VIDEO_LIMIT = 10000;
 
 export default class App extends Component {
   constructor(props) {
@@ -28,12 +30,15 @@ export default class App extends Component {
       mediaPath: null,
       mediaType: -1,
 
+      isCapturingVideo: 0,
       captureVideoAnimation: new Animated.Value(0),
       captureButtonAnimation: new Animated.Value(0),
     };
 
     this._onTouchStartCapture = this._onTouchStartCapture.bind(this);
     this._onMomentumScrollEnd = this._onMomentumScrollEnd.bind(this);
+    this._startRecording = this._startRecording.bind(this);
+    this._stopRecording = this._stopRecording.bind(this);
     this._handleCapture = this._handleCapture.bind(this);
     this._cancelCapture = this._cancelCapture.bind(this);
     this._clearVideoTimeout = this._clearVideoTimeout.bind(this);
@@ -49,6 +54,27 @@ export default class App extends Component {
 
   _onMomentumScrollEnd(e, verticalState, verticalContext) {
     this.setState({ horizontalScrollEnabled: verticalState.index == 1 });
+  }
+
+  _startRecording() {
+    this.refs.camera.startRecording();
+    this._captureVideoTimeout = setTimeout(() => {
+      this._stopRecording();
+    }, VIDEO_LIMIT);
+    Animated.timing(
+      this.state.captureVideoAnimation, {
+        toValue: 1,
+        duration: VIDEO_LIMIT,
+      }
+    ).start();
+    this.setState({isCapturingVideo: 1});
+    this.refs.videoCaptureProgress.performLinearAnimation(100, VIDEO_LIMIT);
+  }
+
+  _stopRecording() {
+    this.refs.camera.stopRecording();
+    this.state.captureVideoAnimation.setValue(0);
+    this.setState({isCapturingVideo: 0});
   }
 
   _handleCapture(data) {
@@ -125,8 +151,7 @@ export default class App extends Component {
               onPressOut={() => {
                 if (this._captureVideoTimeout) {
                   if (this.refs.camera.state.isRecording) {
-                    this.refs.camera.stopRecording();
-                    this.state.captureVideoAnimation.setValue(0);
+                    this._stopRecording();
                     this._clearVideoTimeout();
                   } else {
                     this._captureVideoTimeout = null;
@@ -134,43 +159,29 @@ export default class App extends Component {
                 } else {
                   this.refs.camera.takePicture();
                 }
-                /*
-                Animated.timing(
-                  this.state.captureButtonAnimation, {
-                    toValue: 1,
-                    friction: 1,
-                  }
-                ).start();
-                //*/
               }}
               delayLongPress={300}
-              onLongPress={() => {
-                Animated.timing(
-                  this.state.captureVideoAnimation, {
-                    toValue: 1,
-                  }
-                ).start();
-                this.refs.camera.startRecording();
-                this._captureVideoTimeout = setTimeout(() => {
-                  this.refs.camera.stopRecording();
-                  this.state.captureVideoAnimation.setValue(0);
-                }, VIDEO_LIMIT);
-              }}
+              onLongPress={this._startRecording}
             >
               <View>
-                <Animated.View
+                <Animated.View style={styles.captureButton} />
+
+                <AnimatedCircularProgress
+                  ref="videoCaptureProgress"
+                  size={60}
+                  width={4}
+                  fill={this.state.isCapturingVideo}
+                  rotation={0}
+                  friction={10}
+                  tension={100}
+                  tintColor="red"
+                  backgroundColor="white"
                   style={{
-                    ...StyleSheet.flatten(styles.captureButton),
-                    transform: [{
-                      scale: this.state.captureButtonAnimation.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [1, 0.5],
-                      }),
-                    }],
-                    left: this.state.captureButtonAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, 100],
-                    }),
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    backgroundColor: 'rgba(0,0,0,0)',
+                    opacity: this.state.isCapturingVideo,
                   }}
                 />
 
@@ -178,12 +189,12 @@ export default class App extends Component {
                   style={{
                     ...StyleSheet.flatten(styles.captureVideoButton),
                     opacity: this.state.captureVideoAnimation.interpolate({
-                      inputRange: [0, 0.1, 0.11],
+                      inputRange: [0, 50/VIDEO_LIMIT, 50/VIDEO_LIMIT + 0.01],
                       outputRange: [0, 1, 1],
                     }),
                     transform: [{
                       scale: this.state.captureVideoAnimation.interpolate({
-                        inputRange: [0, 0.1, 0.11],
+                        inputRange: [0, 50/VIDEO_LIMIT, 50/VIDEO_LIMIT + 0.01],
                         outputRange: [0.1, 1, 1],
                       }),
                     }],
