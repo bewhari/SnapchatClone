@@ -47,7 +47,7 @@ export default class CameraView extends Component {
     if (this.camera) {
       console.log('started recording');
       this.camera.capture({mode: Camera.constants.CaptureMode.video})
-        .then(data => console.log(data))
+        .then(data => {this.props.onCapture(data)})
         .catch(err => console.error(err));
 
       this.setState({isRecording: true});
@@ -72,6 +72,7 @@ export default class CameraView extends Component {
           style={styles.preview}
           aspect={this.state.camera.aspect}
           captureTarget={this.state.camera.captureTarget}
+          captureAudio={false}
           type={this.state.camera.type}
           flashMode={this.state.camera.flashMode}
           defaultTouchToFocus
