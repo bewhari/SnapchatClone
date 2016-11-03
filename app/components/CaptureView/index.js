@@ -2,6 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import {
   Dimensions,
   Image,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,6 +16,7 @@ export default class CaptureView extends Component {
     uri: PropTypes.string.isRequired,
     type: PropTypes.number.isRequired,
     onCancel: PropTypes.func.isRequired,
+    hideStatusBar: PropTypes.bool.isRequired,
   };
 
   render() {
@@ -22,6 +24,7 @@ export default class CaptureView extends Component {
 
     return (
       <View style={styles.container}>
+        <StatusBar hidden={this.props.hideStatusBar} />
         {
           type == 0 && <Image style={styles.preview} source={{uri}} />
           ||
@@ -41,9 +44,13 @@ export default class CaptureView extends Component {
 
         <View style={[styles.overlay, styles.topOverlay]}>
           <TouchableOpacity
+            style={styles.iconButton}
             onPress={onCancel}
           >
-            <Text style={{color: 'white'}}>X</Text>
+            <Image
+              style={styles.icon}
+              source={require('../../assets/ic-cancel-preview.png')}
+            />
           </TouchableOpacity>
 
           <View style={{
@@ -52,19 +59,31 @@ export default class CaptureView extends Component {
             alignItems: 'center',
           }}>
             <TouchableOpacity
+              style={styles.iconButton}
               onPress={this.props.onCancel}
             >
-              <Text style={{color: 'white'}}>E</Text>
+              <Image
+                style={[styles.icon, styles.iconGroupTopRight]}
+                source={require('../../assets/ic-notepad.png')}
+              />
             </TouchableOpacity>
             <TouchableOpacity
+              style={styles.iconButton}
               onPress={this.props.onCancel}
             >
-              <Text style={{color: 'white'}}>T</Text>
+              <Image
+                style={[styles.icon, styles.iconGroupTopRight]}
+                source={require('../../assets/ic-text-tool.png')}
+              />
             </TouchableOpacity>
             <TouchableOpacity
+              style={styles.iconButton}
               onPress={this.props.onCancel}
             >
-              <Text style={{color: 'white'}}>C</Text>
+              <Image
+                style={[styles.icon, styles.iconGroupTopRight]}
+                source={require('../../assets/ic-pencil.png')}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -76,26 +95,42 @@ export default class CaptureView extends Component {
             alignItems: 'center',
           }}>
             <TouchableOpacity
+              style={styles.iconButton}
               onPress={this.props.onCancel}
             >
-              <Text style={{color: 'white'}}>L</Text>
+              <Image
+                style={[styles.icon, styles.iconGroupBottomLeft]}
+                source={require('../../assets/ic-clock.png')}
+              />
             </TouchableOpacity>
             <TouchableOpacity
+              style={styles.iconButton}
               onPress={this.props.onCancel}
             >
-              <Text style={{color: 'white'}}>D</Text>
+              <Image
+                style={[styles.icon, styles.iconGroupBottomLeft]}
+                source={require('../../assets/ic-save.png')}
+              />
             </TouchableOpacity>
             <TouchableOpacity
+              style={styles.iconButton}
               onPress={this.props.onCancel}
             >
-              <Text style={{color: 'white'}}>S</Text>
+              <Image
+                style={[styles.icon, styles.iconGroupBottomLeft]}
+                source={require('../../assets/ic-add-story.png')}
+              />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
+            style={styles.iconButton}
             onPress={this.props.onCancel}
           >
-            <Text style={{color: 'white'}}>S</Text>
+            <Image
+              style={styles.sendIcon}
+              source={require('../../assets/ic-send.png')}
+            />
           </TouchableOpacity>
         </View>
 
@@ -115,7 +150,6 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: 'gray',
   },
   preview: {
     width: Dimensions.get('window').width,
@@ -140,6 +174,23 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+  },
+  iconButton: {
+    padding: 5,
+  },
+  icon: {
+    width: 25,
+    height: 25,
+  },
+  sendIcon: {
+    width: 40,
+    height: 40,
+  },
+  iconGroupTopRight: {
+    marginLeft: 10,
+  },
+  iconGroupBottomLeft: {
+    marginRight: 10,
   },
 });

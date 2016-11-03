@@ -36,7 +36,8 @@ export default class App extends Component {
     };
 
     this._onTouchStartCapture = this._onTouchStartCapture.bind(this);
-    this._onMomentumScrollEnd = this._onMomentumScrollEnd.bind(this);
+    this._onHorizontalMomentumScrollEnd = this._onHorizontalMomentumScrollEnd.bind(this);
+    this._onVerticalMomentumScrollEnd = this._onVerticalMomentumScrollEnd.bind(this);
     this._startRecording = this._startRecording.bind(this);
     this._stopRecording = this._stopRecording.bind(this);
     this._handleCapture = this._handleCapture.bind(this);
@@ -52,8 +53,17 @@ export default class App extends Component {
 
   }
 
-  _onMomentumScrollEnd(e, verticalState, verticalContext) {
-    this.setState({ horizontalScrollEnabled: verticalState.index == 1 });
+  _onHorizontalMomentumScrollEnd(e, horizontalState, horizontalContext) {
+    this.setState({
+      horizontalIndex: horizontalState.index,
+    });
+  }
+
+  _onVerticalMomentumScrollEnd(e, verticalState, verticalContext) {
+    this.setState({
+      verticalIndex: verticalState.index,
+      horizontalScrollEnabled: verticalState.index == 1,
+    });
   }
 
   _startRecording() {
@@ -64,7 +74,7 @@ export default class App extends Component {
     Animated.timing(
       this.state.captureVideoAnimation, {
         toValue: 1,
-        duration: VIDEO_LIMIT,
+        duration: 1000,
       }
     ).start();
     this.setState({isCapturingVideo: 1});
@@ -108,6 +118,7 @@ export default class App extends Component {
           loop={false}
           showsPagination={false}
           index={this.state.horizontalIndex}
+          onMomentumScrollEnd={this._onHorizontalMomentumScrollEnd}
           scrollEnabled={this.state.horizontalScrollEnabled}
         >
           <View style={styles.container}>
@@ -119,14 +130,18 @@ export default class App extends Component {
             loop={false}
             showsPagination={false}
             index={this.state.verticalIndex}
-            onMomentumScrollEnd={this._onMomentumScrollEnd}
+            onMomentumScrollEnd={this._onVerticalMomentumScrollEnd}
             onTouchStartCapture={this._onTouchStartCapture}
           >
             <View style={styles.container}>
               <Text>Top</Text>
             </View>
 
-            <CameraView ref="camera" onCapture={this._handleCapture} />
+            <CameraView
+              ref="camera"
+              onCapture={this._handleCapture}
+              hideStatusBar={this.state.horizontalIndex === 1 && this.state.verticalIndex === 1}
+            />
 
             <View style={styles.container}>
               <Text>Bottom</Text>
@@ -144,6 +159,7 @@ export default class App extends Component {
               uri={this.state.mediaPath}
               type={this.state.mediaType}
               onCancel={this._cancelCapture}
+              hideStatusBar={this.state.horizontalIndex === 1 && this.state.verticalIndex === 1}
             />
           ||
           <View style={[styles.overlay, styles.bottomOverlay]}>
@@ -164,7 +180,12 @@ export default class App extends Component {
               onLongPress={this._startRecording}
             >
               <View>
-                <Animated.View style={styles.captureButton} />
+                <Animated.View
+                  style={{
+                    ...StyleSheet.flatten(styles.captureButton),
+                    opacity: 1 - this.state.isCapturingVideo,
+                  }}
+                />
 
                 <AnimatedCircularProgress
                   ref="videoCaptureProgress"
@@ -182,6 +203,12 @@ export default class App extends Component {
                     left: 0,
                     backgroundColor: 'rgba(0,0,0,0)',
                     opacity: this.state.isCapturingVideo,
+                    transform: [{
+                      scale: this.state.captureVideoAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 1.3],
+                      }),
+                    }],
                   }}
                 />
 
@@ -189,13 +216,13 @@ export default class App extends Component {
                   style={{
                     ...StyleSheet.flatten(styles.captureVideoButton),
                     opacity: this.state.captureVideoAnimation.interpolate({
-                      inputRange: [0, 50/VIDEO_LIMIT, 50/VIDEO_LIMIT + 0.01],
-                      outputRange: [0, 1, 1],
+                      inputRange: [0, 1],
+                      outputRange: [0, 1],
                     }),
                     transform: [{
                       scale: this.state.captureVideoAnimation.interpolate({
-                        inputRange: [0, 50/VIDEO_LIMIT, 50/VIDEO_LIMIT + 0.01],
-                        outputRange: [0.1, 1, 1],
+                        inputRange: [0, 1],
+                        outputRange: [0.1, 1],
                       }),
                     }],
                   }}
@@ -222,13 +249,6 @@ const styles = StyleSheet.create({
     padding: 16,
     right: 0,
     left: 0,
-    alignItems: 'center',
-  },
-  topOverlay: {
-    top: 0,
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   bottomOverlay: {
