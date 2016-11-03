@@ -191,6 +191,8 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   iconGroupBottomLeft: {
+    width: 30,
+    height: 30,
     marginRight: 10,
   },
 });
