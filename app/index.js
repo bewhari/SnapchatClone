@@ -9,18 +9,17 @@ import {
 } from 'react-native';
 
 import Swiper from 'react-native-swiper';
+import DashboardControls from './components/DashboardControls';
 import CameraView from './components/CameraView';
 import CaptureView from './components/CaptureView';
 
-import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import { VIDEO_LIMIT } from './constants';
 
-const VIDEO_LIMIT = 10000;
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
 
 export default class App extends Component {
   constructor(props) {
     super(props);
-
-    this._captureVideoTimeout = null;
 
     this.state = {
       horizontalIndex: 1,
@@ -30,7 +29,9 @@ export default class App extends Component {
       mediaPath: null,
       mediaType: -1,
 
-      isCapturingVideo: 0,
+      isCapturingVideo: false,
+      hideDashboardControls: false,
+
       captureVideoAnimation: new Animated.Value(0),
       captureButtonAnimation: new Animated.Value(0),
 
@@ -42,6 +43,7 @@ export default class App extends Component {
     this._onVerticalMomentumScrollEnd = this._onVerticalMomentumScrollEnd.bind(this);
 
     this._onSideIconPress = this._onSideIconPress.bind(this);
+    this._onPressOut = this._onPressOut.bind(this);
 
     this._startRecording = this._startRecording.bind(this);
     this._stopRecording = this._stopRecording.bind(this);
@@ -78,6 +80,17 @@ export default class App extends Component {
     }
   }
 
+  _onPressOut() {
+    if (this._captureVideoTimeout) {
+      if (this.state.isCapturingVideo) {
+        this._stopRecording();
+      }
+      this._clearVideoTimeout();
+    } else {
+      this.refs.camera.takePicture();
+    }
+  }
+
   _startRecording() {
     this.refs.camera.startRecording();
     this._captureVideoTimeout = setTimeout(() => {
@@ -89,14 +102,16 @@ export default class App extends Component {
         duration: 1000,
       }
     ).start();
-    this.setState({isCapturingVideo: 1});
-    this.refs.videoCaptureProgress.performLinearAnimation(100, VIDEO_LIMIT);
+    this.setState({
+      isCapturingVideo: true,
+      hideDashboardControls: true,
+    });
   }
 
   _stopRecording() {
     this.refs.camera.stopRecording();
     this.state.captureVideoAnimation.setValue(0);
-    this.setState({isCapturingVideo: 0});
+    this.setState({isCapturingVideo: false});
   }
 
   _handleCapture(data) {
@@ -106,6 +121,7 @@ export default class App extends Component {
     this.setState({
       mediaPath: data.path,
       mediaType: parts[parts.length-1] == 'jpg' ? 0 : 1,
+      hideDashboardControls: true,
     });
   }
 
@@ -113,6 +129,7 @@ export default class App extends Component {
     this.setState({
       mediaPath: null,
       mediaType: -1,
+      hideDashboardControls: false,
     });
   }
 
@@ -135,7 +152,7 @@ export default class App extends Component {
             [{nativeEvent: {contentOffset: {x: this.state.scrollX}}}]
           )}
           scrollEventThrottle={16}
-          onScrollBeginDrag={(e)=>console.log('_onScrollBeginDrag', this.refs.horizontalSwiper.refs.scrollView.props.contentOffset.x)}
+          onScrollBeginDrag={(e)=>console.log('_onScrollBeginDrag')}
           onMomentumScrollEnd={()=>console.log('_onMomentumScrollEnd')}
           onTouchStartCapture={()=>console.log('_onTouchStartCapture')}
           onTouchStart={()=>console.log('_onTouchStart')}
@@ -185,150 +202,15 @@ export default class App extends Component {
               hideStatusBar={this.state.horizontalIndex === 1 && this.state.verticalIndex === 1}
             />
           ||
-          <View style={[styles.overlay, styles.bottomOverlay]}>
-            <View style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-            }}>
-              <TouchableWithoutFeedback
-                onPressOut={() => {
-                  if (this._captureVideoTimeout) {
-                    if (this.refs.camera.state.isRecording) {
-                      this._stopRecording();
-                      this._clearVideoTimeout();
-                    } else {
-                      this._captureVideoTimeout = null;
-                    }
-                  } else {
-                    this.refs.camera.takePicture();
-                  }
-                }}
-                delayLongPress={300}
-                onLongPress={this._startRecording}
-              >
-                <View>
-                  <Animated.View
-                    style={{
-                      ...StyleSheet.flatten(styles.captureButton),
-                      opacity: 1 - this.state.isCapturingVideo,
-                    }}
-                  />
-
-                  <AnimatedCircularProgress
-                    ref="videoCaptureProgress"
-                    size={70}
-                    width={4}
-                    fill={this.state.isCapturingVideo}
-                    rotation={0}
-                    friction={10}
-                    tension={100}
-                    tintColor="red"
-                    backgroundColor="white"
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      backgroundColor: 'rgba(0,0,0,0)',
-                      opacity: this.state.isCapturingVideo,
-                      transform: [{
-                        scale: this.state.captureVideoAnimation.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [1, 1.3],
-                        }),
-                      }],
-                    }}
-                  />
-
-                  <Animated.View
-                    style={{
-                      ...StyleSheet.flatten(styles.captureVideoButton),
-                      opacity: this.state.captureVideoAnimation,
-                      transform: [{
-                        scale: this.state.captureVideoAnimation.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.5, 1],
-                        }),
-                      }],
-                    }}
-                  />
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-
-            <View style={{
-              marginTop: 10,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'flex-end',
-              opacity: 1 - this.state.isCapturingVideo,
-            }}>
-              <TouchableWithoutFeedback onPress={() => this._onSideIconPress(0)}>
-                <Animated.Image
-                  style={{
-                    ...StyleSheet.flatten([styles.icon, styles.chatIcon]),
-                    left: this.state.scrollX.interpolate({
-                      inputRange: [0, 375, 750],
-                      outputRange: [80, 0, 80],
-                    }),
-                    transform: [{
-                      scale: this.state.scrollX.interpolate({
-                        inputRange: [0, 375, 750],
-                        outputRange: [0.8, 1, 0.8],
-                      })
-                    }],
-                  }}
-                  source={require('./assets/ic-chat.png')}
-                />
-              </TouchableWithoutFeedback>
-              <TouchableWithoutFeedback>
-                <Animated.View style={styles.memoriesButton} />
-              </TouchableWithoutFeedback>
-              <TouchableWithoutFeedback onPress={() => this._onSideIconPress(2)}>
-                <Animated.View
-                  style={{
-                    ...StyleSheet.flatten(styles.icon),
-                    right: this.state.scrollX.interpolate({
-                      inputRange: [0, 375, 750],
-                      outputRange: [80, 0, 80],
-                    }),
-                    transform: [{
-                      scale: this.state.scrollX.interpolate({
-                        inputRange: [0, 375, 750],
-                        outputRange: [0.8, 1, 0.8],
-                      })
-                    }],
-                  }}
-                >
-                  <View style={{
-                    top: 2,
-                    left: 7.5,
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
-                    backgroundColor: 'white',
-                  }} />
-                  <View style={{
-                    position: 'absolute',
-                    bottom: 2,
-                    left: 1,
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
-                    backgroundColor: 'white',
-                  }} />
-                  <View style={{
-                    position: 'absolute',
-                    bottom: 2,
-                    right: 1,
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
-                    backgroundColor: 'white',
-                  }} />
-                </Animated.View>
-              </TouchableWithoutFeedback>
-            </View>
-          </View>
+          <DashboardControls
+            startRecording={this._startRecording}
+            isRecordingVideo={this.state.isCapturingVideo}
+            hideDashboardControls={this.state.hideDashboardControls}
+            onPressOut={this._onPressOut}
+            onSideIconPress={this._onSideIconPress}
+            scrollX={this.state.scrollX}
+            captureVideoAnimation={this.state.captureVideoAnimation}
+          />
         }
 
       </View>
@@ -342,50 +224,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
-  },
-  overlay: {
-    position: 'absolute',
-    flex: 1,
-    padding: 16,
-    right: 0,
-    left: 0,
-  },
-  bottomOverlay: {
-    bottom: 0,
-    flexDirection: 'column',
-    justifyContent: 'center',
-  },
-  captureButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 4,
-    borderColor: 'white',
-  },
-  captureVideoButton: {
-    position: 'absolute',
-    top: 5,
-    left: 5,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 0,
-    backgroundColor: 'red',
-  },
-  memoriesButton: {
-    width: 25,
-    height: 25,
-    borderRadius: 12.5,
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  icon: {
-    width: 25,
-    height: 25,
-  },
-  chatIcon: {
-    width: 20,
-    height: 20,
-    margin: 2.5
   },
 });
