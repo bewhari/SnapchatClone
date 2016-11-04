@@ -1,3 +1,4 @@
 module.exports = {
+  VIDEO_PRESS_THRESHOLD: 300,
   VIDEO_LIMIT: 10000,
 }

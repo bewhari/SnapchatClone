@@ -31,6 +31,7 @@ export default class App extends Component {
 
       isCapturingVideo: false,
       hideDashboardControls: false,
+      animateDashboardOnHorizontalScroll: true,
 
       captureVideoAnimation: new Animated.Value(0),
       captureButtonAnimation: new Animated.Value(0),
@@ -42,7 +43,7 @@ export default class App extends Component {
     this._onHorizontalMomentumScrollEnd = this._onHorizontalMomentumScrollEnd.bind(this);
     this._onVerticalMomentumScrollEnd = this._onVerticalMomentumScrollEnd.bind(this);
 
-    this._onSideIconPress = this._onSideIconPress.bind(this);
+    this._scrollHorizontalTo = this._scrollHorizontalTo.bind(this);
     this._onPressOut = this._onPressOut.bind(this);
 
     this._startRecording = this._startRecording.bind(this);
@@ -56,8 +57,8 @@ export default class App extends Component {
     this._clearVideoTimeout();
   }
 
-  _onTouchStartCapture(e, verticalState, verticalContext) {
-
+  _onTouchStartCapture(e, horizontalState, horizontalContext) {
+    this.setState({animateDashboardOnHorizontalScroll: true});
   }
 
   _onHorizontalMomentumScrollEnd(e, horizontalState, horizontalContext) {
@@ -73,21 +74,31 @@ export default class App extends Component {
     });
   }
 
-  _onSideIconPress(index) {
+  _scrollHorizontalTo(index) {
     const offset = index - this.state.horizontalIndex;
+    if (Math.abs(offset) == 2) {
+      this.setState({animateDashboardOnHorizontalScroll: false});
+    } else {
+      this.setState({animateDashboardOnHorizontalScroll: true});
+    }
+
     if (this.state.horizontalScrollEnabled) {
       this.refs.horizontalSwiper.scrollBy(offset, true);
     }
   }
 
   _onPressOut() {
-    if (this._captureVideoTimeout) {
-      if (this.state.isCapturingVideo) {
-        this._stopRecording();
+    if (this.state.horizontalIndex === 1 && this.state.verticalIndex === 1) {
+      if (this._captureVideoTimeout) {
+        if (this.state.isCapturingVideo) {
+          this._stopRecording();
+        }
+        this._clearVideoTimeout();
+      } else {
+        this.refs.camera.takePicture();
       }
-      this._clearVideoTimeout();
-    } else {
-      this.refs.camera.takePicture();
+    } else if (this.state.verticalIndex === 1) {
+      this._scrollHorizontalTo(1);
     }
   }
 
@@ -152,16 +163,15 @@ export default class App extends Component {
             [{nativeEvent: {contentOffset: {x: this.state.scrollX}}}]
           )}
           scrollEventThrottle={16}
-          onScrollBeginDrag={(e)=>console.log('_onScrollBeginDrag')}
-          onMomentumScrollEnd={()=>console.log('_onMomentumScrollEnd')}
-          onTouchStartCapture={()=>console.log('_onTouchStartCapture')}
-          onTouchStart={()=>console.log('_onTouchStart')}
-          onTouchEnd={()=>console.log('_onTouchEnd')}
-          onResponderRelease={()=>console.log('_onResponderRelease')}
-          //onMomentumScrollEnd={this._onHorizontalMomentumScrollEnd}
+          onMomentumScrollEnd={this._onHorizontalMomentumScrollEnd}
+          onTouchStartCapture={this._onTouchStartCapture}
           scrollEnabled={this.state.horizontalScrollEnabled}
         >
-          <View style={styles.container}>
+          <View style={{
+            ...StyleSheet.flatten(styles.container),
+            backgroundColor: 'powderblue',
+          }}
+          >
             <Text>Left</Text>
           </View>
 
@@ -171,7 +181,6 @@ export default class App extends Component {
             showsPagination={false}
             index={this.state.verticalIndex}
             onMomentumScrollEnd={this._onVerticalMomentumScrollEnd}
-            onTouchStartCapture={this._onTouchStartCapture}
           >
             <View style={styles.container}>
               <Text>Top</Text>
@@ -188,7 +197,11 @@ export default class App extends Component {
             </View>
           </Swiper>
 
-          <View style={styles.container}>
+          <View style={{
+            ...StyleSheet.flatten(styles.container),
+            backgroundColor: 'steelblue',
+          }}
+          >
             <Text>Right</Text>
           </View>
         </Swiper>
@@ -206,8 +219,9 @@ export default class App extends Component {
             startRecording={this._startRecording}
             isRecordingVideo={this.state.isCapturingVideo}
             hideDashboardControls={this.state.hideDashboardControls}
+            animateDashboardOnHorizontalScroll={this.state.animateDashboardOnHorizontalScroll}
             onPressOut={this._onPressOut}
-            onSideIconPress={this._onSideIconPress}
+            onSideButtonPress={this._scrollHorizontalTo}
             scrollX={this.state.scrollX}
             captureVideoAnimation={this.state.captureVideoAnimation}
           />
