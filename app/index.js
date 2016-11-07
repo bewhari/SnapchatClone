@@ -22,8 +22,8 @@ export default class App extends Component {
     super(props);
 
     this.state = {
-      horizontalIndex: 1,
-      verticalIndex: 1,
+      horizontalScrollIndex: 1,
+      verticalScrollIndex: 1,
       horizontalScrollEnabled: true,
 
       mediaPath: null,
@@ -36,11 +36,13 @@ export default class App extends Component {
       captureVideoAnimation: new Animated.Value(0),
       captureButtonAnimation: new Animated.Value(0),
 
-      scrollX: new Animated.Value(0),
+      scrollAnimation: new Animated.ValueXY({x: 0, y: 0}),
+      cameraViewScrollY: new Animated.Value(0),
     };
 
-    this._onTouchStartCapture = this._onTouchStartCapture.bind(this);
+    this._onHorizontalTouchStartCapture = this._onHorizontalTouchStartCapture.bind(this);
     this._onHorizontalMomentumScrollEnd = this._onHorizontalMomentumScrollEnd.bind(this);
+    this._onVerticalTouchStartCapture = this._onVerticalTouchStartCapture.bind(this);
     this._onVerticalMomentumScrollEnd = this._onVerticalMomentumScrollEnd.bind(this);
 
     this._scrollHorizontalTo = this._scrollHorizontalTo.bind(this);
@@ -57,30 +59,39 @@ export default class App extends Component {
     this._clearVideoTimeout();
   }
 
-  _onTouchStartCapture(e, horizontalState, horizontalContext) {
-    this.setState({animateDashboardOnHorizontalScroll: true});
+  _onHorizontalTouchStartCapture(e, horizontalState, horizontalContext) {
+    this.setState({
+      animateDashboardOnHorizontalScroll: true,
+    });
   }
 
   _onHorizontalMomentumScrollEnd(e, horizontalState, horizontalContext) {
     this.setState({
-      horizontalIndex: horizontalState.index,
+      horizontalScrollIndex: horizontalState.index,
     });
+  }
+
+  _onVerticalTouchStartCapture(e, horizontalState, horizontalContext) {
   }
 
   _onVerticalMomentumScrollEnd(e, verticalState, verticalContext) {
     this.setState({
-      verticalIndex: verticalState.index,
+      verticalScrollIndex: verticalState.index,
       horizontalScrollEnabled: verticalState.index == 1,
     });
   }
 
   _scrollHorizontalTo(index) {
-    const offset = index - this.state.horizontalIndex;
+    const offset = index - this.state.horizontalScrollIndex;
+    console.log('_scrollHorizontalTo: ', index, offset);
+//*
     if (Math.abs(offset) == 2) {
       this.setState({animateDashboardOnHorizontalScroll: false});
+      console.log('false');
     } else {
       this.setState({animateDashboardOnHorizontalScroll: true});
     }
+//*/
 
     if (this.state.horizontalScrollEnabled) {
       this.refs.horizontalSwiper.scrollBy(offset, true);
@@ -88,7 +99,7 @@ export default class App extends Component {
   }
 
   _onPressOut() {
-    if (this.state.horizontalIndex === 1 && this.state.verticalIndex === 1) {
+    if (this.state.horizontalScrollIndex === 1 && this.state.verticalScrollIndex === 1) {
       if (this._captureVideoTimeout) {
         if (this.state.isCapturingVideo) {
           this._stopRecording();
@@ -97,8 +108,10 @@ export default class App extends Component {
       } else {
         this.refs.camera.takePicture();
       }
-    } else if (this.state.verticalIndex === 1) {
+    } else if (this.state.verticalScrollIndex === 1) {
       this._scrollHorizontalTo(1);
+    } else {
+
     }
   }
 
@@ -158,13 +171,13 @@ export default class App extends Component {
           ref="horizontalSwiper"
           loop={false}
           showsPagination={false}
-          index={this.state.horizontalIndex}
+          index={this.state.horizontalScrollIndex}
           onScroll={Animated.event(
-            [{nativeEvent: {contentOffset: {x: this.state.scrollX}}}]
+            [{nativeEvent: {contentOffset: {x: this.state.scrollAnimation.x}}}]
           )}
           scrollEventThrottle={16}
           onMomentumScrollEnd={this._onHorizontalMomentumScrollEnd}
-          onTouchStartCapture={this._onTouchStartCapture}
+          onTouchStartCapture={this._onHorizontalTouchStartCapture}
           scrollEnabled={this.state.horizontalScrollEnabled}
         >
           <View style={{
@@ -175,27 +188,17 @@ export default class App extends Component {
             <Text>Left</Text>
           </View>
 
-          <Swiper
-            horizontal={false}
-            loop={false}
-            showsPagination={false}
-            index={this.state.verticalIndex}
+          <CameraView
+            ref="camera"
+            onCapture={this._handleCapture}
+            hideStatusBar={this.state.horizontalScrollIndex === 1 && this.state.verticalScrollIndex === 1}
+            scrollIndex={this.state.verticalScrollIndex}
+            onScroll={Animated.event(
+              [{nativeEvent: {contentOffset: {y: this.state.scrollAnimation.y}}}]
+            )}
+            onTouchStartCapture={this._onVerticalTouchStartCapture}
             onMomentumScrollEnd={this._onVerticalMomentumScrollEnd}
-          >
-            <View style={styles.container}>
-              <Text>Top</Text>
-            </View>
-
-            <CameraView
-              ref="camera"
-              onCapture={this._handleCapture}
-              hideStatusBar={this.state.horizontalIndex === 1 && this.state.verticalIndex === 1}
-            />
-
-            <View style={styles.container}>
-              <Text>Bottom</Text>
-            </View>
-          </Swiper>
+          />
 
           <View style={{
             ...StyleSheet.flatten(styles.container),
@@ -212,17 +215,17 @@ export default class App extends Component {
               uri={this.state.mediaPath}
               type={this.state.mediaType}
               onCancel={this._cancelCapture}
-              hideStatusBar={this.state.horizontalIndex === 1 && this.state.verticalIndex === 1}
+              hideStatusBar={this.state.horizontalScrollIndex === 1 && this.state.verticalScrollIndex === 1}
             />
           ||
           <DashboardControls
             startRecording={this._startRecording}
             isRecordingVideo={this.state.isCapturingVideo}
             hideDashboardControls={this.state.hideDashboardControls}
-            animateDashboardOnHorizontalScroll={this.state.animateDashboardOnHorizontalScroll}
+            animateOnHorizontalScroll={this.state.animateDashboardOnHorizontalScroll}
             onPressOut={this._onPressOut}
             onSideButtonPress={this._scrollHorizontalTo}
-            scrollX={this.state.scrollX}
+            scrollAnimation={this.state.scrollAnimation}
             captureVideoAnimation={this.state.captureVideoAnimation}
           />
         }

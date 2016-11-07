@@ -18,23 +18,27 @@ export default class DashboardControls extends Component {
     onPressOut: PropTypes.func.isRequired,
     isRecordingVideo: PropTypes.bool.isRequired,
     hideDashboardControls: PropTypes.bool.isRequired,
-    animateDashboardOnHorizontalScroll: PropTypes.bool.isRequired,
+    animateOnHorizontalScroll: PropTypes.bool.isRequired,
     onSideButtonPress: PropTypes.func.isRequired,
     captureVideoAnimation: PropTypes.object.isRequired,
-    scrollX: PropTypes.object.isRequired,
+    scrollAnimation: PropTypes.object.isRequired,
   };
 
   constructor(props) {
     super(props);
 
-    this._getSideButtonStyles = this._getSideButtonStyles.bind(this);
-    this._getMemoriesButtonStyles = this._getMemoriesButtonStyles.bind(this);
-    this._getCaptureButtonStyles = this._getCaptureButtonStyles.bind(this);
+    // this._getSideButtonHorizontalStyles = this._getSideButtonHorizontalStyles.bind(this);
+    // this._getSideButtonVerticalStyles = this._getSideButtonVerticalStyles.bind(this);
+    // this._getMemoriesButtonHorizontalStyles = this._getMemoriesButtonHorizontalStyles.bind(this);
+    // this._getMemoriesButtonVerticalStyles = this._getMemoriesButtonVerticalStyles.bind(this);
+    // this._getCaptureButtonHorizontalStyles = this._getCaptureButtonHorizontalStyles.bind(this);
+    // this._getCaptureButtonVerticalStyles = this._getCaptureButtonVerticalStyles.bind(this);
   }
 
-  _getSideButtonStyles(left, presets, shouldAnimate, windowWidth, scrollX) {
+  _getSideButtonHorizontalStyles(left, presets, animateOnHorizontalScroll, windowWidth, scrollX) {
     let style;
-    if (shouldAnimate) {
+
+    if (animateOnHorizontalScroll) {
       style = {
         ...presets,
         [left ? 'left' : 'right']: scrollX.interpolate({
@@ -61,9 +65,27 @@ export default class DashboardControls extends Component {
     return style;
   }
 
-  _getMemoriesButtonStyles(presets, shouldAnimate, windowWidth, scrollX) {
+  _getSideButtonVerticalStyles(left, presets, windowDimensions, scrollY) {
+    const { width, height } = windowDimensions;
+    return {
+      ...presets,
+      [left ? 'left' : 'right']: scrollY.interpolate({
+        inputRange: [0, height, 2*height],
+        outputRange: [0.2*width, 0, 0.2*width],
+      }),
+      transform: [{
+        scale: scrollY.interpolate({
+          inputRange: [0, 0.5*height, height, 1.5*height, 2*height],
+          outputRange: [0.8, 0.8, 1, 0.8, 0.8],
+        }),
+      }],
+    }
+  }
+
+  _getMemoriesButtonHorizontalStyles(presets, windowWidth, animateOnHorizontalScroll, scrollX) {
     let style;
-    if (shouldAnimate) {
+
+    if (animateOnHorizontalScroll) {
       style = {
         ...presets,
         top: scrollX.interpolate({
@@ -86,9 +108,21 @@ export default class DashboardControls extends Component {
     return style;
   }
 
-  _getCaptureButtonStyles(presets, shouldAnimate, windowWidth, scrollX) {
+  _getMemoriesButtonVerticalStyles(presets, windowDimensions, scrollY) {
+    const { width, height } = windowDimensions;
+    return {
+      ...presets,
+      top: scrollY.interpolate({
+        inputRange: [0, height, 2*height],
+        outputRange: [35, 0, 35],
+      }),
+    };
+  }
+
+  _getCaptureButtonHorizontalStyles(presets, windowWidth, animateOnHorizontalScroll, scrollX) {
     let style;
-    if (shouldAnimate) {
+
+    if (animateOnHorizontalScroll) {
       style = {
         ...presets,
         top: scrollX.interpolate({
@@ -115,168 +149,228 @@ export default class DashboardControls extends Component {
     return style;
   }
 
+  _getCaptureButtonVerticalStyles(presets, windowDimensions, scrollY) {
+    const { width, height } = windowDimensions;
+    return {
+      ...presets,
+      top: scrollY.interpolate({
+        inputRange: [0, height, 2*height],
+        outputRange: [50, 0, 50],
+      }),
+      transform: [{
+        scale: scrollY.interpolate({
+          inputRange: [0, height, 2*height],
+          outputRange: [0.6, 1, 0.6],
+        }),
+      }],
+    };
+  }
+
   render() {
-    var { height, width } = Dimensions.get('window');
+    const windowDimensions = Dimensions.get('window');
 
     return (
       <View style={[styles.overlay, styles.bottomOverlay]}>
-
-        <View style={{
-          ...StyleSheet.flatten(styles.navigatorContainer),
-          opacity: this.props.hideDashboardControls ? 0 : 1,
+        <Animated.View style={{
+          opacity: this.props.scrollAnimation.y.interpolate({
+            inputRange: [0, windowDimensions.height, 2*windowDimensions.height],
+            outputRange: [0, 1, 0],
+          }),
         }}
         >
-          <TouchableWithoutFeedback onPress={() => this.props.onSideButtonPress(0)}>
-            <Animated.View
-              style={this._getSideButtonStyles(
-                true,
-                StyleSheet.flatten(styles.sideButton),
-                this.props.animateDashboardOnHorizontalScroll,
-                width,
-                this.props.scrollX
-              )}
-            >
-              <View style={{
-                position: 'absolute',
-                top: 15,
-                right: 7.5,
-                width: 0,
-                height: 0,
-                backgroundColor: 'rgba(0,0,0,0)',
-                borderStyle: 'solid',
-                borderLeftWidth: 7.5,
-                borderTopWidth: 7.5,
-                borderLeftColor: 'rgba(0,0,0,0)',
-                borderTopColor: 'white'
-              }}
-              />
-              <View style={{
-                position: 'absolute',
-                top: 2.5,
-                left: 2.5,
-                width: 15,
-                height: 15,
-                borderRadius: 3,
-                backgroundColor: 'white',
-              }}
-              />
-            </Animated.View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback>
-            <Animated.View
-              style={this._getMemoriesButtonStyles(
-                StyleSheet.flatten(styles.memoriesButton),
-                this.props.animateDashboardOnHorizontalScroll,
-                width,
-                this.props.scrollX
-              )}
-            />
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback onPress={() => this.props.onSideButtonPress(2)}>
-            <Animated.View
-              style={this._getSideButtonStyles(
-                false,
-                StyleSheet.flatten(styles.sideButton),
-                this.props.animateDashboardOnHorizontalScroll,
-                width,
-                this.props.scrollX
-              )}
-            >
-              <View style={{
-                position: 'absolute',
-                top: 2,
-                left: 7.5,
-                width: 10,
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: 'white',
-              }}
-              />
-              <View style={{
-                position: 'absolute',
-                bottom: 2,
-                left: 1,
-                width: 10,
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: 'white',
-              }}
-              />
-              <View style={{
-                position: 'absolute',
-                bottom: 2,
-                right: 1,
-                width: 10,
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: 'white',
-              }}
-              />
-            </Animated.View>
-          </TouchableWithoutFeedback>
-        </View>
+          <View style={{
+            ...StyleSheet.flatten(styles.navigatorContainer),
+            opacity: this.props.hideDashboardControls ? 0 : 1,
+          }}
+          >
+            <TouchableWithoutFeedback onPress={() => this.props.onSideButtonPress(0)}>
+              <Animated.View
+                style={this._getSideButtonHorizontalStyles(
+                  true,
+                  StyleSheet.flatten(styles.dashboardButton),
+                  this.props.animateOnHorizontalScroll,
+                  windowDimensions.width,
+                  this.props.scrollAnimation.x
+                )}
+              >
+                <Animated.View
+                  style={this._getSideButtonVerticalStyles(
+                    true,
+                    {},
+                    windowDimensions,
+                    this.props.scrollAnimation.y
+                  )}
+                >
+                  <View style={{
+                    position: 'absolute',
+                    top: 15,
+                    right: 7.5,
+                    width: 0,
+                    height: 0,
+                    backgroundColor: 'rgba(0,0,0,0)',
+                    borderStyle: 'solid',
+                    borderLeftWidth: 7.5,
+                    borderTopWidth: 7.5,
+                    borderLeftColor: 'rgba(0,0,0,0)',
+                    borderTopColor: 'white'
+                  }}
+                  />
+                  <View style={{
+                    position: 'absolute',
+                    top: 2.5,
+                    left: 2.5,
+                    width: 15,
+                    height: 15,
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                  }}
+                  />
+                </Animated.View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+            <TouchableWithoutFeedback>
+              <Animated.View
+                style={this._getMemoriesButtonHorizontalStyles(
+                  StyleSheet.flatten(styles.dashboardButton),
+                  windowDimensions.width,
+                  this.props.animateOnHorizontalScroll,
+                  this.props.scrollAnimation.x
+                )}
+              >
+                <Animated.View
+                  style={this._getMemoriesButtonVerticalStyles(
+                    {},
+                    windowDimensions,
+                    this.props.scrollAnimation.y
+                  )}
+                >
+                  <View style={styles.memoriesButton} />
+                </Animated.View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+            <TouchableWithoutFeedback onPress={() => this.props.onSideButtonPress(2)}>
+              <Animated.View
+                style={this._getSideButtonHorizontalStyles(
+                  false,
+                  StyleSheet.flatten(styles.dashboardButton),
+                  this.props.animateOnHorizontalScroll,
+                  windowDimensions.width,
+                  this.props.scrollAnimation.x
+                )}
+              >
+                <Animated.View
+                  style={this._getSideButtonVerticalStyles(
+                    false,
+                    StyleSheet.flatten(styles.dashboardButton),
+                    windowDimensions,
+                    this.props.scrollAnimation.y
+                  )}
+                >
+                  <View style={{
+                    position: 'absolute',
+                    top: 2,
+                    left: 7.5,
+                    width: 10,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: 'white',
+                  }}
+                  />
+                  <View style={{
+                    position: 'absolute',
+                    bottom: 2,
+                    left: 1,
+                    width: 10,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: 'white',
+                  }}
+                  />
+                  <View style={{
+                    position: 'absolute',
+                    bottom: 2,
+                    right: 1,
+                    width: 10,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: 'white',
+                  }}
+                  />
+                </Animated.View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          </View>
+        </Animated.View>
 
         <View style={styles.captureButtonContainer}>
           <Animated.View
-            style={this._getCaptureButtonStyles(
+            style={this._getCaptureButtonHorizontalStyles(
               {},
-              this.props.animateDashboardOnHorizontalScroll,
-              width,
-              this.props.scrollX
+              windowDimensions.width,
+              this.props.animateOnHorizontalScroll,
+              this.props.scrollAnimation.x
             )}
           >
-            <TouchableWithoutFeedback
-              onPressOut={this.props.onPressOut}
-              delayLongPress={VIDEO_PRESS_THRESHOLD}
-              onLongPress={() => {
-                this.props.startRecording();
-                this.refs.videoCaptureProgress.performLinearAnimation(100, VIDEO_LIMIT);
-              }}
+            <Animated.View
+              style={this._getCaptureButtonVerticalStyles(
+                {},
+                windowDimensions,
+                this.props.scrollAnimation.y
+              )}
             >
-              <View>
-                <Animated.View
-                  style={{
-                    ...StyleSheet.flatten(styles.captureButton),
-                    opacity: this.props.hideDashboardControls ? 0 : 1,
-                  }}
-                />
+              <TouchableWithoutFeedback
+                onPressOut={this.props.onPressOut}
+                delayLongPress={VIDEO_PRESS_THRESHOLD}
+                onLongPress={() => {
+                  this.props.startRecording();
+                  this.refs.videoCaptureProgress.performLinearAnimation(100, VIDEO_LIMIT);
+                }}
+              >
+                <View>
+                  <Animated.View
+                    style={{
+                      ...StyleSheet.flatten(styles.captureButton),
+                      opacity: this.props.hideDashboardControls ? 0 : 1,
+                    }}
+                  />
 
-                <AnimatedCircularProgress
-                  ref="videoCaptureProgress"
-                  size={70}
-                  width={4}
-                  fill={this.props.isRecordingVideo ? 0 : 1}
-                  rotation={0}
-                  friction={10}
-                  tension={100}
-                  tintColor="red"
-                  backgroundColor="white"
-                  style={{
-                    ...StyleSheet.flatten(styles.captureVideoButtonOuter),
-                    opacity: this.props.isRecordingVideo ? 1 : 0,
-                    transform: [{
-                      scale: this.props.captureVideoAnimation.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [1, 1.3],
-                      }),
-                    }],
-                  }}
-                />
+                  <AnimatedCircularProgress
+                    ref="videoCaptureProgress"
+                    size={70}
+                    width={4}
+                    fill={this.props.isRecordingVideo ? 0 : 1}
+                    rotation={0}
+                    friction={10}
+                    tension={100}
+                    tintColor="red"
+                    backgroundColor="white"
+                    style={{
+                      ...StyleSheet.flatten(styles.captureVideoButtonOuter),
+                      opacity: this.props.isRecordingVideo ? 1 : 0,
+                      transform: [{
+                        scale: this.props.captureVideoAnimation.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1, 1.3],
+                        }),
+                      }],
+                    }}
+                  />
 
-                <Animated.View
-                  style={{
-                    ...StyleSheet.flatten(styles.captureVideoButtonInner),
-                    opacity: this.props.captureVideoAnimation,
-                    transform: [{
-                      scale: this.props.captureVideoAnimation.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.5, 1],
-                      }),
-                    }],
-                  }}
-                />
-              </View>
-            </TouchableWithoutFeedback>
+                  <Animated.View
+                    style={{
+                      ...StyleSheet.flatten(styles.captureVideoButtonInner),
+                      opacity: this.props.captureVideoAnimation,
+                      transform: [{
+                        scale: this.props.captureVideoAnimation.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.5, 1],
+                        }),
+                      }],
+                    }}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+            </Animated.View>
           </Animated.View>
         </View>
 
@@ -336,15 +430,18 @@ const styles = StyleSheet.create({
     left: 0,
     backgroundColor: 'rgba(0,0,0,0)',
   },
+  dashboardButton: {
+    width: 25,
+    height: 25,
+  },
   memoriesButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
     width: 25,
     height: 25,
     borderRadius: 12.5,
     borderWidth: 2,
     borderColor: 'white',
-  },
-  sideButton: {
-    width: 25,
-    height: 25,
   },
 });

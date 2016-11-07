@@ -9,12 +9,17 @@ import {
   View,
 } from 'react-native';
 
+import Swiper from 'react-native-swiper';
 import Camera from 'react-native-camera';
 
 export default class CameraView extends Component {
   static propTypes = {
     onCapture: PropTypes.func.isRequired,
     hideStatusBar: PropTypes.bool.isRequired,
+    scrollIndex: PropTypes.number.isRequired,
+    onScroll: PropTypes.func.isRequired,
+    onTouchStartCapture: PropTypes.func.isRequired,
+    onMomentumScrollEnd: PropTypes.func.isRequired,
   };
 
   constructor(props) {
@@ -122,43 +127,69 @@ export default class CameraView extends Component {
 
   render() {
     return (
-      <View style={styles.container}>
-        <StatusBar hidden={this.props.hideStatusBar} />
-        <Camera
-          ref={(cam) => {
-            this.camera = cam;
-          }}
-          style={styles.camera}
-          aspect={this.state.camera.aspect}
-          captureTarget={this.state.camera.captureTarget}
-          captureAudio={false}
-          type={this.state.camera.type}
-          flashMode={this.state.camera.flashMode}
-          defaultTouchToFocus
-          mirrorImage={false}
-        />
-
-        <View style={[styles.overlay, styles.topOverlay]}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={this._switchFlash}
-          >
-            <Image
-              style={styles.icon}
-              source={this.flashIcon}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={this._switchType}
-          >
-            <Image
-              style={styles.icon}
-              source={this.typeIcon}
-            />
-          </TouchableOpacity>
+      <Swiper
+        horizontal={false}
+        loop={false}
+        showsPagination={false}
+        index={this.props.scrollIndex}
+        onScroll={this.props.onScroll}
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={this.props.onMomentumScrollEnd}
+      >
+        <View style={{
+          ...StyleSheet.flatten(styles.container),
+          backgroundColor: 'skyblue',
+        }}
+        >
+          <Text>Top</Text>
         </View>
-      </View>
+
+        <View style={styles.container}>
+          <StatusBar hidden={this.props.hideStatusBar} />
+          <Camera
+            ref={(cam) => {
+              this.camera = cam;
+            }}
+            style={styles.camera}
+            aspect={this.state.camera.aspect}
+            captureTarget={this.state.camera.captureTarget}
+            captureAudio={false}
+            type={this.state.camera.type}
+            flashMode={this.state.camera.flashMode}
+            defaultTouchToFocus
+            mirrorImage={false}
+          />
+
+          <View style={[styles.overlay, styles.topOverlay]}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={this._switchFlash}
+            >
+              <Image
+                style={styles.icon}
+                source={this.flashIcon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={this._switchType}
+            >
+              <Image
+                style={styles.icon}
+                source={this.typeIcon}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={{
+          ...StyleSheet.flatten(styles.container),
+          backgroundColor: 'skyblue',
+        }}
+        >
+          <Text>Bottom</Text>
+        </View>
+      </Swiper>
     );
   }
 }
@@ -166,6 +197,9 @@ export default class CameraView extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5FCFF',
   },
   camera: {
     flex: 1,
