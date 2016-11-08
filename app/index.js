@@ -37,7 +37,6 @@ export default class App extends Component {
       captureButtonAnimation: new Animated.Value(0),
 
       scrollAnimation: new Animated.ValueXY({x: 0, y: 0}),
-      cameraViewScrollY: new Animated.Value(0),
     };
 
     this._onHorizontalTouchStartCapture = this._onHorizontalTouchStartCapture.bind(this);
@@ -198,6 +197,7 @@ export default class App extends Component {
             )}
             onTouchStartCapture={this._onVerticalTouchStartCapture}
             onMomentumScrollEnd={this._onVerticalMomentumScrollEnd}
+            scrollAnimation={this.state.scrollAnimation.y}
           />
 
           <View style={{

@@ -168,13 +168,14 @@ export default class DashboardControls extends Component {
 
   render() {
     const windowDimensions = Dimensions.get('window');
+    const { width, height } = windowDimensions;
 
     return (
       <View style={[styles.overlay, styles.bottomOverlay]}>
         <Animated.View style={{
           opacity: this.props.scrollAnimation.y.interpolate({
-            inputRange: [0, windowDimensions.height, 2*windowDimensions.height],
-            outputRange: [0, 1, 0],
+            inputRange: [0, 0.5*height, height, 1.5*height, 2*height],
+            outputRange: [0, 0, 1, 0, 0],
           }),
         }}
         >
@@ -189,7 +190,7 @@ export default class DashboardControls extends Component {
                   true,
                   StyleSheet.flatten(styles.dashboardButton),
                   this.props.animateOnHorizontalScroll,
-                  windowDimensions.width,
+                  width,
                   this.props.scrollAnimation.x
                 )}
               >
@@ -232,7 +233,7 @@ export default class DashboardControls extends Component {
               <Animated.View
                 style={this._getMemoriesButtonHorizontalStyles(
                   StyleSheet.flatten(styles.dashboardButton),
-                  windowDimensions.width,
+                  width,
                   this.props.animateOnHorizontalScroll,
                   this.props.scrollAnimation.x
                 )}
@@ -254,7 +255,7 @@ export default class DashboardControls extends Component {
                   false,
                   StyleSheet.flatten(styles.dashboardButton),
                   this.props.animateOnHorizontalScroll,
-                  windowDimensions.width,
+                  width,
                   this.props.scrollAnimation.x
                 )}
               >
@@ -306,7 +307,7 @@ export default class DashboardControls extends Component {
           <Animated.View
             style={this._getCaptureButtonHorizontalStyles(
               {},
-              windowDimensions.width,
+              width,
               this.props.animateOnHorizontalScroll,
               this.props.scrollAnimation.x
             )}

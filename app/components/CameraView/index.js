@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import {
+  Animated,
   Dimensions,
   Image,
   StatusBar,
@@ -11,6 +12,7 @@ import {
 
 import Swiper from 'react-native-swiper';
 import Camera from 'react-native-camera';
+import { BlurView } from 'react-native-blur';
 
 export default class CameraView extends Component {
   static propTypes = {
@@ -20,6 +22,7 @@ export default class CameraView extends Component {
     onScroll: PropTypes.func.isRequired,
     onTouchStartCapture: PropTypes.func.isRequired,
     onMomentumScrollEnd: PropTypes.func.isRequired,
+    scrollAnimation: PropTypes.object.isRequired,
   };
 
   constructor(props) {
@@ -125,8 +128,38 @@ export default class CameraView extends Component {
     return icon;
   }
 
+  _getBlurViewStyles(windowDimensions, scrollY) {
+    const { width, height } = windowDimensions;
+    return {
+      position: 'absolute',
+      width: width,
+      backgroundColor: 'rgba(0,0,0,0.3)',
+      opacity: scrollY.interpolate({
+        inputRange: [0, 0.5*height, height, 1.5*height, 2*height],
+        outputRange: [1, 1, 0, 1, 1],
+      }),
+    };
+  }
+
   render() {
+    const windowDimensions = Dimensions.get('window');
+    const { width, height } = windowDimensions;
+
     return (
+      <View style={styles.container}>
+      <Camera
+        ref={(cam) => {
+          this.camera = cam;
+        }}
+        style={styles.camera}
+        aspect={this.state.camera.aspect}
+        captureTarget={this.state.camera.captureTarget}
+        captureAudio={false}
+        type={this.state.camera.type}
+        flashMode={this.state.camera.flashMode}
+        defaultTouchToFocus
+        mirrorImage={false}
+      >
       <Swiper
         horizontal={false}
         loop={false}
@@ -136,31 +169,41 @@ export default class CameraView extends Component {
         scrollEventThrottle={16}
         onMomentumScrollEnd={this.props.onMomentumScrollEnd}
       >
-        <View style={{
-          ...StyleSheet.flatten(styles.container),
-          backgroundColor: 'skyblue',
-        }}
-        >
-          <Text>Top</Text>
+        <View style={styles.container}>
+          <Animated.View
+            style={{
+              ...this._getBlurViewStyles(windowDimensions, this.props.scrollAnimation),
+              top: 0,
+              //height: 2*height,
+            }}
+          >
+            <BlurView
+              blurType="dark"
+              blurAmount={10}
+              style={{
+                width: width,
+                height: 2*height,
+              }}
+            >
+
+            </BlurView>
+          </Animated.View>
         </View>
 
-        <View style={styles.container}>
+        <View
+          style={styles.container}
+        >
           <StatusBar hidden={this.props.hideStatusBar} />
-          <Camera
-            ref={(cam) => {
-              this.camera = cam;
-            }}
-            style={styles.camera}
-            aspect={this.state.camera.aspect}
-            captureTarget={this.state.camera.captureTarget}
-            captureAudio={false}
-            type={this.state.camera.type}
-            flashMode={this.state.camera.flashMode}
-            defaultTouchToFocus
-            mirrorImage={false}
-          />
 
-          <View style={[styles.overlay, styles.topOverlay]}>
+          <Animated.View
+            style={{
+              ...StyleSheet.flatten([styles.overlay, styles.topOverlay]),
+              opacity: this.props.scrollAnimation.interpolate({
+                inputRange: [0, 0.5*height, height, 1.5*height, 2*height],
+                outputRange: [0, 0, 1, 0, 0],
+              }),
+            }}
+          >
             <TouchableOpacity
               style={styles.iconButton}
               onPress={this._switchFlash}
@@ -179,17 +222,37 @@ export default class CameraView extends Component {
                 source={this.typeIcon}
               />
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
 
-        <View style={{
-          ...StyleSheet.flatten(styles.container),
-          backgroundColor: 'skyblue',
-        }}
+        <View
+          style={{
+            ...StyleSheet.flatten(styles.container),
+            backgroundColor: 'skyblue',
+          }}
         >
+          <Animated.View
+            style={{
+              ...this._getBlurViewStyles(windowDimensions, this.props.scrollAnimation),
+              top: -height,
+              //height: height,
+            }}
+          >
+            <BlurView
+              blurType="dark"
+              blurAmount={10}
+              style={{
+                width: width,
+                height: height,
+              }}
+            >
+            </BlurView>
+          </Animated.View>
           <Text>Bottom</Text>
         </View>
       </Swiper>
+      </Camera>
+      </View>
     );
   }
 }
@@ -199,7 +262,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
   },
   camera: {
     flex: 1,
