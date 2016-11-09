@@ -127,7 +127,7 @@ export default class DashboardControls extends Component {
         ...presets,
         top: scrollX.interpolate({
           inputRange: [0, windowWidth, 2*windowWidth],
-          outputRange: [50, 0, 50],
+          outputRange: [60, 0, 60],
         }),
         transform: [{
           scale: scrollX.interpolate({
@@ -139,7 +139,7 @@ export default class DashboardControls extends Component {
     } else {
       style = {
         ...presets,
-        top: 50,
+        top: 60,
         transform: [{
           scale: 0.6,
         }],
@@ -155,7 +155,7 @@ export default class DashboardControls extends Component {
       ...presets,
       top: scrollY.interpolate({
         inputRange: [0, height, 2*height],
-        outputRange: [50, 0, 50],
+        outputRange: [60, 0, 60],
       }),
       transform: [{
         scale: scrollY.interpolate({
@@ -204,8 +204,8 @@ export default class DashboardControls extends Component {
                 >
                   <View style={{
                     position: 'absolute',
-                    top: 15,
-                    right: 7.5,
+                    top: 17.5,
+                    right: 5,
                     width: 0,
                     height: 0,
                     backgroundColor: 'rgba(0,0,0,0)',
@@ -218,10 +218,10 @@ export default class DashboardControls extends Component {
                   />
                   <View style={{
                     position: 'absolute',
-                    top: 2.5,
-                    left: 2.5,
-                    width: 15,
-                    height: 15,
+                    top: 0,
+                    left: 0,
+                    width: 20,
+                    height: 20,
                     borderRadius: 3,
                     backgroundColor: 'white',
                   }}
@@ -269,31 +269,31 @@ export default class DashboardControls extends Component {
                 >
                   <View style={{
                     position: 'absolute',
-                    top: 2,
-                    left: 7.5,
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
+                    top: 1,
+                    left: 6,
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
                     backgroundColor: 'white',
                   }}
                   />
                   <View style={{
                     position: 'absolute',
-                    bottom: 2,
-                    left: 1,
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
+                    bottom: 0,
+                    left: -1,
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
                     backgroundColor: 'white',
                   }}
                   />
                   <View style={{
                     position: 'absolute',
-                    bottom: 2,
-                    right: 1,
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
+                    bottom: 0,
+                    right: 0,
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
                     backgroundColor: 'white',
                   }}
                   />
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   overlay: {
     position: 'absolute',
     flex: 1,
-    padding: 16,
+    padding: 18,
     right: 0,
     left: 0,
   },
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 50,
+    bottom: 60,
     flexDirection: 'row',
     justifyContent: 'center',
   },
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    borderWidth: 4,
+    borderWidth: 5,
     borderColor: 'white',
   },
   captureVideoButtonInner: {

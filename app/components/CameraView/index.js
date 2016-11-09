@@ -174,7 +174,6 @@ export default class CameraView extends Component {
             style={{
               ...this._getBlurViewStyles(windowDimensions, this.props.scrollAnimation),
               top: 0,
-              //height: 2*height,
             }}
           >
             <BlurView
@@ -190,9 +189,7 @@ export default class CameraView extends Component {
           </Animated.View>
         </View>
 
-        <View
-          style={styles.container}
-        >
+        <View style={styles.container}>
           <StatusBar hidden={this.props.hideStatusBar} />
 
           <Animated.View
@@ -235,7 +232,6 @@ export default class CameraView extends Component {
             style={{
               ...this._getBlurViewStyles(windowDimensions, this.props.scrollAnimation),
               top: -height,
-              //height: height,
             }}
           >
             <BlurView

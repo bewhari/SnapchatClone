@@ -82,7 +82,7 @@ export default class App extends Component {
 
   _scrollHorizontalTo(index) {
     const offset = index - this.state.horizontalScrollIndex;
-    console.log('_scrollHorizontalTo: ', index, offset);
+    //console.log('_scrollHorizontalTo: ', index, offset);
 //*
     if (Math.abs(offset) == 2) {
       this.setState({animateDashboardOnHorizontalScroll: false});
