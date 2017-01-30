@@ -15,12 +15,7 @@ import {
 } from 'react-native';
 
 import Video from 'react-native-video';
-import {
-  CAPTION_MIN_OFFSET_TOP,
-  CAPTION_MIN_OFFSET_BOTTOM,
-  CAPTION_HEIGHT,
-  CAPTION_PADDING,
-} from '../../constants';
+import { CAPTION } from '../../constants';
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 
@@ -37,14 +32,22 @@ export default class CaptureView extends Component {
 
     this.state = {
       isCaptioning: false,
-      caption: '',
+      caption: {
+        text: '',
+        type: CAPTION.TYPE.BAR,
+        color: 'rgb(255,255,255,0)',
+      },
       drag: new Animated.ValueXY({x: 0, y: 0.65*WINDOW_HEIGHT}),
 
       captionAnimation: new Animated.Value(0),
     };
 
-    this._handleOnMediaPress = this._handleOnMediaPress.bind(this);
+    this._handleOnBackgroundPress = this._handleOnBackgroundPress.bind(this);
     this._handleOnCaptionPress = this._handleOnCaptionPress.bind(this);
+    this._handleBackIconPress = this._handleBackIconPress.bind(this);
+    this._handleCaptionIconPress = this._handleCaptionIconPress.bind(this);
+
+    this._getTextInputStyles = this._getTextInputStyles.bind(this);
   }
 
   componentWillMount() {
@@ -68,7 +71,7 @@ export default class CaptureView extends Component {
 
     this._keyboardWillShowListener = Keyboard.addListener('keyboardWillShow', (e) => {
       Animated.spring(this.state.captionAnimation, {
-        toValue: WINDOW_HEIGHT - (e.endCoordinates.height + CAPTION_HEIGHT + Math.min(Math.max(this._dragY, CAPTION_MIN_OFFSET_TOP), WINDOW_HEIGHT - CAPTION_MIN_OFFSET_BOTTOM)),
+        toValue: WINDOW_HEIGHT - (e.endCoordinates.height + CAPTION.HEIGHT + Math.min(Math.max(this._dragY, CAPTION.MIN_OFFSET_TOP), WINDOW_HEIGHT - CAPTION.MIN_OFFSET_BOTTOM)),
         friction: 10,
         duration: 100,
       }).start();
@@ -89,8 +92,8 @@ export default class CaptureView extends Component {
     this._keyboardWillHideListener.remove();
   }
 
-  _handleOnMediaPress() {
-    if (!this.state.isCaptioning && !this.state.caption) {
+  _handleOnBackgroundPress() {
+    if (!this.state.isCaptioning && !this.state.caption.text) {
       this.setState({isCaptioning: true});
     } else if (this.state.isCaptioning) {
       this.setState({isCaptioning: false});
@@ -103,6 +106,50 @@ export default class CaptureView extends Component {
     }
   }
 
+  _handleBackIconPress() {
+    if (this.state.isCaptioning) {
+      this.setState({isCaptioning: false});
+    }
+  }
+
+  _handleCaptionIconPress() {
+    if (!this.state.isCaptioning && !this.state.caption.text) {
+      this.setState({isCaptioning: true});
+    } else {
+      // cycle between different caption types
+      const numTypes = Object.keys(CAPTION.TYPE).length;
+
+      this.setState({
+        caption: {
+          text: this.state.caption.text,
+          type: (this.state.caption.type + 1) % numTypes,
+          color: 'rgb(255,255,255,0)',
+        }
+      });
+      console.log('caption type: ', this.state.caption.type);
+    }
+  }
+
+  _getTextInputStyles() {
+    let style;
+    switch(this.state.caption.type) {
+      case CAPTION.TYPE.FLOAT:
+        style = {
+          color: 'red',
+          fontSize: 40,
+        };
+        break;
+      case CAPTION.TYPE.BAR:
+      default:
+        style = {
+          height: CAPTION.HEIGHT - 2*CAPTION.PADDING,
+          color: 'white',
+          fontSize: 16,
+        };
+    }
+    return style;
+  }
+
   render() {
     const { uri, type, onCancel } = this.props;
 
@@ -111,7 +158,7 @@ export default class CaptureView extends Component {
         <StatusBar hidden={this.props.hideStatusBar} />
 
         <TouchableWithoutFeedback
-          onPress={this._handleOnMediaPress}
+          onPress={this._handleOnBackgroundPress}
         >
           {
             type == 0 &&
@@ -135,14 +182,14 @@ export default class CaptureView extends Component {
           }
         </TouchableWithoutFeedback>
 
-        { (this.state.isCaptioning || !!this.state.caption) &&
+        { (this.state.isCaptioning || !!this.state.caption.text) &&
           <Animated.View
             {...this.panResponder.panHandlers}
             style={{
               top: Animated.diffClamp(
                 this.state.drag.y,
-                CAPTION_MIN_OFFSET_TOP,
-                WINDOW_HEIGHT - CAPTION_MIN_OFFSET_BOTTOM
+                CAPTION.MIN_OFFSET_TOP,
+                WINDOW_HEIGHT - CAPTION.MIN_OFFSET_BOTTOM
               ),
               flex: 1,
               justifyContent: 'center',
@@ -155,8 +202,8 @@ export default class CaptureView extends Component {
                 top: this.state.captionAnimation,
                 left: 0,
                 right: 0,
-                height: CAPTION_HEIGHT,
-                padding: CAPTION_PADDING,
+                height: CAPTION.HEIGHT,
+                padding: CAPTION.PADDING,
                 backgroundColor: 'rgba(0,0,0,0.5)',
               }}
             >
@@ -164,30 +211,31 @@ export default class CaptureView extends Component {
               <View
                 style={{
                   width: Dimensions.get('window').width,
-                  height: CAPTION_HEIGHT - 2*CAPTION_PADDING,
+                  height: CAPTION.HEIGHT - 2*CAPTION.PADDING,
                   alignItems: 'center',
                 }}
               >
                 { this.state.isCaptioning &&
                   <TextInput
-                    style={{
-                      height: CAPTION_HEIGHT - 2*CAPTION_PADDING,
-                      color: 'white',
-                      fontSize: 14,
-                    }}
-                    onChangeText={(caption) => this.setState({caption})}
-                    value={this.state.caption}
+                    style={this._getTextInputStyles()}
+                    onChangeText={(text) => this.setState({
+                      caption: {
+                        ...this.state.caption,
+                        text: text,
+                      }
+                    })}
+                    value={this.state.caption.text}
                     autoFocus={true}
                     onSubmitEditing={Keyboard.dismiss}
                   />
                   ||
                   <Text
                     style={{
-                      fontSize: 14,
+                      fontSize: 16,
                       color: 'white',
                     }}
                   >
-                    {this.state.caption}
+                    {this.state.caption.text}
                   </Text>
                 }
               </View>
@@ -197,15 +245,27 @@ export default class CaptureView extends Component {
         }
 
         <View style={[styles.overlay, styles.topOverlay]}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={onCancel}
-          >
-            <Image
-              style={styles.icon}
-              source={require('../../assets/ic-cancel-preview.png')}
-            />
-          </TouchableOpacity>
+          { this.state.isCaptioning &&
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={this._handleBackIconPress}
+            >
+              <Image
+                style={styles.icon}
+                source={require('../../assets/ic-left-chevron.png')}
+              />
+            </TouchableOpacity>
+            ||
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={this.props.onCancel}
+            >
+              <Image
+                style={styles.icon}
+                source={require('../../assets/ic-cancel-preview.png')}
+              />
+            </TouchableOpacity>
+          }
 
           <View style={{
             flexDirection: 'row',
@@ -223,7 +283,7 @@ export default class CaptureView extends Component {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={this.props.onCancel}
+              onPress={this._handleCaptionIconPress}
             >
               <Image
                 style={[styles.icon, styles.iconGroupTopRight]}
@@ -278,7 +338,7 @@ export default class CaptureView extends Component {
           </View>
 
           <TouchableOpacity
-            style={styles.iconButton}
+            style={[styles.iconButton, styles.sendIconBackground]}
             onPress={this.props.onCancel}
           >
             <Image
@@ -337,9 +397,17 @@ const styles = StyleSheet.create({
     width: 25,
     height: 25,
   },
-  sendIcon: {
+  sendIconBackground: {
     width: 40,
     height: 40,
+    borderRadius: 20,
+    backgroundColor: 'dodgerblue',
+  },
+  sendIcon: {
+    width: 21,
+    height: 24,
+    top: 3,
+    left: 5,
   },
   iconGroupTopRight: {
     marginLeft: 10,
